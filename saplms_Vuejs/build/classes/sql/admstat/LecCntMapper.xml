@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 기간 : 강의시작날짜(li_date)에서 between을 써서 날짜를 찾는 방법으로 해보자.... 해당 수강을 들은  사람, 사람의 총점, 총점의 평균... -->
+
+
+<mapper namespace="kr.happyjob.study.admstat.dao.AdmstatLecCntDao">
+	<select id="listLecCnt" resultType="kr.happyjob.study.admstat.model.AdmstatLecCntModel">
+			<!-- 강의코드, 강의명, 강의시작, 강의종료, 신청인원, 정원 -->
+	            select li_no
+				      ,li_nm
+				      ,li_date
+				      ,li_redate
+				      ,li_ap
+				      ,li_garden
+				  from tb_lecinfo
+                  
+    		<where>	         
+		       <if test="(startdate != null) and (!startdate.equals('')) and (enddate != null) and (!enddate.equals(''))">
+		             and li_date between #{startdate} and #{enddate}
+		       </if>             
+    	 	</where>       
+         
+         
+		limit #{startnum},#{pagesize}
+    </select>
+    
+      
+    
+    <select id="searchlistcnt" resultType="int">
+            select count(*)
+            from tb_lecinfo
+           	<where>	         
+		       <if test="(startdate != null) and (!startdate.equals('')) and (enddate != null) and (!enddate.equals(''))">
+		             and li_date between #{startdate} and #{enddate}
+		       </if>             
+    	 	</where>
+    </select>
+    
+    <select id="listLecCntchart" resultType="kr.happyjob.study.admstat.model.AdmstatLecCntModel">
+            select li_no
+			      ,li_nm
+			      ,li_date
+			      ,li_redate
+			      ,li_ap
+			      ,li_garden
+			  from tb_lecinfo
+			 where li_no = #{li_no}    
+    </select>
+</mapper>

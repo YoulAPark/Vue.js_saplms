@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.stdsmt.dao.StdSmtLecListDao">
+
+<!-- 목록조회 -->
+<select id="LecList" resultType="kr.happyjob.study.stdsmt.model.StdSmtLecListVo">
+	select ta.li_no 
+        ,tb.li_nm 
+        ,tc.name 
+        ,tb.li_date 
+        ,tb.li_redate 
+        ,td.ci_nm 
+from tb_subjectlist ta
+     inner join tb_lecinfo tb on ta.li_no = tb.li_no
+     inner join tb_userinfo tc on tb.loginID = tc.loginID
+     left join tb_classinfo td on tb.li_no2 = td.li_no
+where ta.loginID = #{loginID}
+ORDER BY tb.li_date
+LIMIT #{startnum},#{pagesize}	
+</select>
+
+<!-- 데이터 건수 -->
+<select id="LecListCnt" resultType="int">
+	select count(*)
+	from (
+		select 	ta.li_no
+				,tb.li_nm
+				,tc.name
+				,tb.li_date
+				,tb.li_redate
+				,td.ci_nm
+	from 	tb_subjectlist ta
+			inner join tb_lecinfo tb on ta.li_no = tb.li_no
+			inner join tb_userinfo tc on tb.loginID = tc.loginID
+			left join tb_classinfo td on tb.li_no2 = td.li_no
+	where ta.loginID = #{loginID}
+	) ll
+	
+		
+</select>
+<!--  모달 Ajax콜백 -->
+<select id="selectLecList" resultType="kr.happyjob.study.stdsmt.model.StdSmtLecListVo">
+	select  ta.li_no
+			,ta.li_nm
+			,ui.name
+			,ta.li_date
+			,ta.li_redate
+			,ta.li_contents
+		from tb_lecinfo ta
+	       inner join tb_subjectlist tb	on ta.li_no = tb.li_no
+	       inner join tb_userinfo ui on tb.loginID = ui.loginID
+	       left outer join tb_classinfo ci on ci.li_no = ta.li_no2
+		where tb.loginID = #{loginID}
+		and	ta.li_no = #{li_no}
+		
+
+</select>
+
+
+</mapper>

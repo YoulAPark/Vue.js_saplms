@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.admsmt.dao.AdmsmtLecListMgtDao">
+
+
+<!-- 강의목록 조회 -->
+	<select id="listAdmsmtLecList" resultType="kr.happyjob.study.admsmt.model.AdmsmtLecListMgtModel">
+		/*kr.happy.study.stdsst.dao.ComnCodDao.listStdsstLecData*/
+		SELECT		
+		      tb.li_no
+		      ,tb.li_nm
+                  ,ui.name
+                  ,tb.loginID
+                  ,tb.li_no2
+                  ,tb.li_ap
+			 	
+		FROM	tb_lecinfo tb
+            inner join tb_userinfo ui on ui.loginID = tb.loginID
+			<where>
+			<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="oname eq 'li_no'.toString()">
+						and tb.li_no Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'li_nm'.toString()">
+						and li_nm Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'loginID'.toString()">
+						and tb.loginID LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'name'.toString()">
+						and name LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'li_no2'.toString()">
+						and li_no2 LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+					
+					
+					
+					
+				</choose>
+			</if>
+		</where>
+		
+		ORDER BY li_no ASC
+		LIMIT #{pageIndex}, #{pageSize}
+		
+		
+	</select>
+
+	<!-- 검색 총갯수
+ --> 	<select id="countListAdmsmtLecList" resultType="int">
+		/*kr.happy.study.stdsst.dao.ComnCodDao.listStdsstLecData*/
+		SELECT		
+		      count(*)
+			
+		FROM	tb_lecinfo tb
+            inner join tb_userinfo ui on ui.loginID = tb.loginID
+			<where>
+			<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="oname eq 'li_no'.toString()">
+						and tb.li_no Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'li_nm'.toString()">
+						and li_nm Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'loginID'.toString()">
+						and tb.loginID LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'name'.toString()">
+						and name LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="oname eq 'li_no2'.toString()">
+						and li_no2 LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	
+		
+		
+	</select>
+	
+	
+	
+	
+	<!-- 수강인원 목록 조회 -->
+	<select id="listAdmsmtLecPersonList" resultType="kr.happyjob.study.admsmt.model.AdmsmtLecListMgtModel">
+		/*kr.happy.study.stdsst.dao.ComnCodDao.listStdsstLecData*/
+		SELECT		
+		  sj.loginID
+		 ,ui.name
+		 ,ui.user_dept
+		 ,tb.li_nm
+		 ,tb.li_date
+		 ,tb.li_redate
+		 ,sj.sb_yn
+		 ,tb.li_no
+		FROM	tb_lecinfo tb
+		inner join tb_subjectlist sj on tb.li_no = sj.li_no
+		inner join tb_userinfo ui on ui.loginId=sj.loginID
+		where
+		tb.li_no = #{li_no}
+		
+		
+		ORDER BY ui.name DESC
+		LIMIT #{pageIndex}, #{pageSize}
+		
+		
+	</select>
+
+	<!-- 수강인원 검색 총갯수
+ --> 	<select id="countListAdmsmtLecPersonList" resultType="int">
+		/*kr.happy.study.stdsst.dao.ComnCodDao.listStdsstLecData*/
+		SELECT		
+		 count(1)
+		          
+		FROM	tb_lecinfo tb
+		inner join tb_subjectlist sj on tb.li_no = sj.li_no
+		inner join tb_userinfo ui on ui.loginID=sj.loginID
+		where
+		tb.li_no = #{li_no}
+	
+		
+		
+	</select>
+	
+	
+	
+	
+	
+		<!-- 학생 단건 조회 -->
+	<select id="selectAdmsmtLecPersonList" resultType="kr.happyjob.study.admsmt.model.AdmsmtLecListMgtModel">
+		/*kr.happy.study.stdsst.dao.ComnCodDao.listStdsstLecData*/
+		select loginID    
+		       ,PASSWORD
+		       ,NAME
+		       ,sex
+		       ,hp
+		       ,regdate
+		       ,loc
+		       ,birthday
+		       ,user_type
+		       ,email
+		       from tb_userinfo
+		       where tb_userinfo.loginID=#{loginID}
+	</select>
+	
+	
+	
+	
+	
+	
+	
+		
+		<!-- 휴학업데이트 -->
+	<update id="updateSb_yn">
+	
+		update tb_subjectlist
+                set 
+                
+                   sb_yn=#{sb_yn}
+                  
+          		where li_no = #{li_no} and loginID = #{loginID}
+	</update>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- 그룹코드 단건 조회
+	<select id="selectStdsstLecData" resultType="kr.happyjob.study.stdsst.model.StdsstLecDataModel">
+		/*kr.happy.study.stdsst.dao.ComnCodDao.listStdsstLecData*/
+		SELECT		
+				tb.le_no
+			,	tb.li_no 
+			, 	tb.le_title 
+			,	tb.le_nm
+			,	at.att_ori
+			,	tb.le_contents 
+			,   tb.att_no 
+			,	tb.le_date 
+			, 	at.att_nli
+            , 	at.att_mul
+            , 	at.att_size
+		FROM	tb_lecdata tb
+			left outer join tb_attachment at on at.att_no = tb.att_no
+		WHERE	li_no = #{li_no} and le_no = #{le_no} 
+	</select>
+	
+	
+
+	 -->
+	
+	
+</mapper>

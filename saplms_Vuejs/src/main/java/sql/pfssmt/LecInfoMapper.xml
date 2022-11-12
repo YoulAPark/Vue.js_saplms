@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.pfssmt.dao.PfssmtLecInfoDao">
+
+	<select id="lecturelist" resultType="kr.happyjob.study.pfssmt.model.PfssmtLecInfoModel">
+		SELECT
+				li.li_no,
+				li.li_nm,
+				li.loginID,
+				li.li_date,
+				li.li_redate,
+				li.li_garden,
+				li.li_target,
+				li.li_plan,
+				li.li_contents,
+				li.li_ad,
+				li.li_type,
+				li.li_no2,
+				li.test_cd,
+				li.att_no,
+				name,
+				dc.detail_name,
+				(SELECT COUNT(loginID) FROM tb_subjectlist WHERE li_no = li.li_no) li_ap
+		FROM tb_lecinfo li
+			INNER JOIN tb_userinfo ui ON ui.loginID = li.loginID
+			INNER JOIN tb_detail_code dc ON dc.detail_code = li.li_type and dc.group_code = 'lectype' 
+		<where>
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when test="searchtype eq 'title'.toString()">
+						and li.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when test="searchtype eq 'teacher'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+				</choose>
+			</if>
+			<if test="((sdate != null) and (!sdate.equals(''))) and ((edate != null) and (!edate.equals('')))">
+				and (li.li_date &gt;= '${sdate}' and li.li_date &lt;= '${edate}')
+				or (li.li_redate &gt;= '${sdate}' and li.li_redate &lt;= '${edate}')
+				or (li.li_date &lt;= '${sdate}' and li.li_redate &gt;= '${edate}')
+			</if>
+		</where>
+		ORDER BY 1 DESC
+		LIMIT #{startnum}, #{pagesize}
+	</select>
+
+	<select id="searchlistcnt" resultType="int">
+		SELECT COUNT(*)
+		FROM tb_lecinfo li
+			INNER JOIN tb_userinfo ui ON ui.loginID = li.loginID
+			INNER JOIN tb_detail_code dc ON dc.detail_code = li.li_type and dc.group_code = 'lectype' 
+		<where>
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when test="searchtype eq 'title'.toString()">
+						and li.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when test="searchtype eq 'teacher'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+				</choose>
+			</if>
+			<if test="((sdate != null) and (!sdate.equals(''))) and ((edate != null) and (!edate.equals('')))">
+				and (li.li_date &gt;= '${sdate}' and li.li_date &lt;= '${edate}')
+				or (li.li_redate &gt;= '${sdate}' and li.li_redate &lt;= '${edate}')
+				or (li.li_date &lt;= '${sdate}' and li.li_redate &gt;= '${edate}')
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectOneLecture" resultType="kr.happyjob.study.pfssmt.model.PfssmtLecInfoModel">
+		SELECT
+				li.li_no,
+				li.li_nm,
+				li.loginID,
+				li.li_date,
+				li.li_redate,
+				li.li_garden,
+				li.li_ap,
+				li.li_target,
+				li.li_plan,
+				li.li_contents,
+				li.li_ad,
+				li.li_type,
+				li.li_no2,
+				li.test_cd,
+				li.att_no,
+				name
+		FROM tb_lecinfo li
+			INNER JOIN tb_userinfo ui ON ui.loginID = li.loginID
+		WHERE li.li_no = #{li_no}
+	</select>
+	
+	<insert id="insertLec">
+		<selectKey resultType="int" keyProperty="nli_no" order="BEFORE">
+			SELECT IFNULL(MAX(li_no), 0) + 1 FROM tb_lecinfo
+		</selectKey>
+			INSERT INTO tb_lecinfo
+						(
+							li_no,
+							li_nm,
+							loginID,
+							li_date,
+							li_redate,
+							li_contents,
+							li_type,
+							li_garden
+						) VALUES (
+							#{nli_no},
+							#{li_nm},
+							#{loginID},
+							#{sdate},
+							#{edate},
+							#{cont},
+							#{li_type},
+							#{li_garden}
+						)
+	</insert>
+	
+	<update id="updateLec">
+		UPDATE tb_lecinfo
+			SET li_nm = #{li_nm},
+				li_date = #{sdate},
+				li_redate = #{edate},
+				li_contents = #{cont},
+				li_type = #{li_type},
+				li_garden = #{li_garden}
+		WHERE li_no = #{li_no}
+	</update>
+	
+	<delete id="deleteLec">
+		DELETE FROM tb_lecinfo
+		WHERE li_no = #{li_no}
+	</delete>
+	
+	
+	
+</mapper>

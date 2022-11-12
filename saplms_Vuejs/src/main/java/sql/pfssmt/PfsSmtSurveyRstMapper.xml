@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.pfssmt.dao.PfsSmtSurveyRstDao">
+
+<!-- 설문평점 목록 조회 -->
+<select id="surveyRstList" resultType="kr.happyjob.study.pfssmt.model.PfsSmtSurveyRstVo">
+	select ta.li_no
+			,tb.li_nm
+			,tc.name as tname
+			,ta.loginID
+			,td.name
+			,te.ci_nm
+			,ta.sv_cj
+		from tb_survey ta
+			inner join tb_lecinfo tb ON tb.li_no = ta.li_no
+			inner join tb_userinfo tc on tc.loginID = tb.loginID
+			inner join tb_userinfo td on ta.loginID = td.loginID
+			inner join tb_classinfo te on tb.li_no2 = te.li_no
+		where tb.loginID = #{loginID}
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				and  tb.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+			</if>
+		limit #{startnum},#{pagesize}
+		
+      
+      
+</select>
+
+<!-- 설문평점 총건수 -->
+<select id="SurveyRstCnt" resultType="int">
+	  select count(*)
+		from tb_survey ta
+			inner join tb_lecinfo tb ON tb.li_no = ta.li_no
+			inner join tb_userinfo tc on tc.loginID = tb.loginID
+			inner join tb_userinfo td on ta.loginID = td.loginID
+			inner join tb_classinfo te on tb.li_no2 = te.li_no
+		where tb.loginID = #{loginID}
+		
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				and  tb.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+			</if>
+			
+			<if test='li_date != null and li_date != ""'>  
+  				and ta.sv_date  <![CDATA[ >= ]]> #{li_date}
+			</if>
+			
+			<if test='li_redate != null and li_redate != ""'>  
+  				and ta.sv_date <![CDATA[ <= ]]> #{li_redate}
+			</if>
+			
+			
+		limit #{startnum},#{pagesize}
+</select>
+     
+   
+</mapper>

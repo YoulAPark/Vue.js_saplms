@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.admhmt.dao.AdmhmtStudentMgtDao">
+<!-- 학생 목록 리스트 조회-->
+	<select id="studentList" resultType="kr.happyjob.study.admhmt.model.AdmhmtStudentMgtModel">
+		select 	 ta.name
+          		,ta.status_yn
+          		,ta.loginID
+          		,ta.password
+          		,ta.hp
+          		,ta.class as classes 
+          		,ta.regdate 
+	from tb_userinfo ta
+	where ta.user_type = 'C'
+		<if test="(studentName != null) and (!studentName.equals(''))">
+		 	AND name LIKE CONCAT('%', #{studentName}, '%')
+		 </if>
+		 <if test="(startDate != null) and (!startDate.equals(''))">
+		 	AND regdate <![CDATA[ >= ]]>  #{startDate}
+		 </if>
+		 <if test="(endDate != null) and (!endDate.equals(''))">
+		 	AND regdate <![CDATA[ <= ]]> #{endDate}  
+		 </if>
+		 ORDER BY ta.regdate DESC
+		 LIMIT #{startnum},#{pagesize}
+	</select>
+	
+	<select id="studentListCnt" resultType="int">
+		select count(*)
+	from tb_userinfo ta
+	where ta.user_type = 'C'
+		<if test="(studentName != null) and (!studentName.equals(''))">
+		 	AND name LIKE CONCAT('%', #{studentName}, '%')
+		</if>
+		<if test="(startDate != null) and (!startDate.equals(''))">
+		 	AND regdate <![CDATA[ >= ]]>  #{startDate}
+		</if>
+		<if test="(endDate != null) and (!endDate.equals(''))">
+		 	AND regdate <![CDATA[ <= ]]> #{endDate}  
+		</if>
+
+	</select>
+	
+	<insert id="studentRegist">
+		INSERT INTO tb_userinfo
+						(
+						loginID, 
+						user_type,
+						name,
+						password,
+						sex,
+						hp,
+						email,
+						regdate,
+						loc,
+						birthday,
+						status_yn,
+						user_dept
+						)
+		VALUES
+					(
+						#{loginID}, 
+						"C",
+						#{name},
+						#{password},
+						#{sex},
+						#{tel1}"-"#{tel2}"-"#{tel3},
+						#{email}"@"#{emailadd},
+						now(),
+						#{areacd},
+						#{birthday},
+						"Y",
+						#{user_dept}
+					)
+	
+	</insert>
+	
+	
+	
+</mapper>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.stdsmt.dao.StdsmtReportDao">
+
+	<!-- 과제 목록 조회 -->
+	<select id="stdsmtReportList" resultType="kr.happyjob.study.stdsmt.model.StdsmtReportModel">
+		SELECT
+		asn.as_no as reportNo
+		, (select li_nm from tb_userinfo ui
+		inner join tb_lecinfo li on ui.loginID = li.loginID where asn.li_no =
+		li.li_no) 
+		as li_nm	<!-- 서브쿼리로 li_nm(강의명) 따로 추출  -->
+		, u.name as stdName
+		, asn.loginID as stdId
+		, asn.as_contents as reportContent
+		, DATE_FORMAT(asn.as_date, '%Y-%m-%d') as reportRegdate
+		, (select ui.name from tb_userinfo ui
+		inner join tb_lecinfo li on ui.loginID = li.loginID where asn.li_no =
+		li.li_no)
+		as proName <!-- 서브쿼리로 loginId(강사명) 따로 추출  -->
+		,at.att_no as att_no
+		
+
+		FROM tb_assign asn
+		LEFT JOIN tb_userinfo u
+		ON asn.loginID = u.loginID
+		inner join tb_lecinfo li on li.li_no = asn.li_no
+		left join tb_attachment at on asn.att_no = at.att_no <!-- 첨부파일이 없어도 과제제출 테이블 모두 출력 -->
+
+		ORDER BY asn.as_no DESC
+		LIMIT #{pageIndex}, #{pageSize}
+	</select>
+
+
+	<!-- 과제 목록 총 갯수 조회 -->
+	<select id="stdsmtReportCnt" resultType="int">
+		/*kr.happy.study.stdsmt.dao.StdsmtReportDao.StdsmtReportCnt*/
+		SELECT
+		COUNT(*)
+		FROM tb_assign asn
+
+		ORDER BY asn.as_no DESC
+	</select>
+
+
+
+
+	<!-- 과제 목록 단건조회 -->
+
+	<select id="selectreport" resultType="kr.happyjob.study.stdsmt.model.StdsmtReportModel">
+	
+			<!--  as_no >>>> reportNo 로 작업함 -->
+		SELECT
+			asn.as_no as reportNo
+			, (select li_nm from tb_userinfo ui
+			inner join tb_lecinfo li on ui.loginID = li.loginID where asn.li_no =
+			li.li_no)
+			as li_nm
+			, u.name as stdName
+			, asn.loginID as stdId
+			, asn.as_contents as reportContent
+			, DATE_FORMAT(asn.as_date, '%Y-%m-%d') as reportRegdate
+			, (select ui.name 
+				from tb_userinfo ui inner join tb_lecinfo li on ui.loginID = li.loginID 
+				where asn.li_no = li.li_no) as proName
+			,at.att_no as att_no
+			,at.att_ori as att_ori
+			,at.att_nli as att_nli
+			,at.att_mul as att_mul
+			,at.att_size as att_size
+		
+		
+		FROM tb_assign asn
+			LEFT JOIN tb_userinfo u ON asn.loginID = u.loginID
+			inner join tb_lecinfo li on li.li_no = asn.li_no
+			left join tb_attachment at on asn.att_no = at.att_no
+		WHERE asn.as_no = #{reportNo}
+		
+		
+	</select>
+
+	<select id="myLecList" resultType="kr.happyjob.study.stdsmt.model.StdsmtReportModel">
+		select sj.li_no,li.li_nm
+			from tb_subjectlist sj 
+	 		left join tb_lecinfo li on li.li_no = sj.li_no
+	
+			where sj.loginID = #{loginID}
+	</select>
+
+	<!-- 과제제출 파일업로드 insert 로직상 2번째 작동 -->
+	<insert id="insertReportFileatt">
+		<selectKey resultType="int" keyProperty="nas_no" order="BEFORE">
+			select ifnull(max(as_no),0) + 1 from tb_assign
+		</selectKey>
+		insert into tb_assign
+		(
+		as_no
+		, li_no
+		, loginID
+		, as_contents
+		, as_date
+		, att_no
+		) values (
+		 #{nas_no}
+    	,#{lino}
+		,#{loginID}
+		,#{reportContent}
+		,now()
+		<if test="fileyn eq 'N'.toString()">
+			,0
+		</if>
+		<if test="fileyn eq 'Y'.toString()">
+			,(select ifnull(max(att_no),0) from tb_attachment )
+		</if>
+		)
+	</insert>
+
+
+	<!-- 과제제출 업데이트 -->
+	<update id="updateStdsmtReport">
+		update tb_assign
+		set as_date = now()
+		, loginID = #{loginID}
+		, as_contents = #{reportContent}
+		
+		where as_no = #{reportNo}
+	</update>
+	
+	
+
+	<!-- 과제 제출 삭제 -->
+	<delete id="deleteReportFileatt">
+		delete from tb_assign
+		where as_no = #{reportNo}
+	</delete>
+
+	<!--  과제제출 파일업로드 insert 로직상 1번째 작동  -->
+
+	<insert id="insertReportinfo">
+		<selectKey resultType="int" keyProperty="att_no" order="BEFORE">
+			select ifnull(max(att_no),0) + 1 from tb_attachment
+		</selectKey>
+		insert into tb_attachment
+			(
+			  att_no
+			, att_ori
+			, att_date
+			, att_nli
+			, att_mul
+			, att_size
+			) values (
+			#{att_no}
+			,#{file_nm}
+			,now()
+			,#{loc_file_loc}
+			,#{file_loc}
+			,#{file_size}
+			)
+	</insert>
+	<!-- 파일 삭제시 데이터삭제. -->
+	<delete id="deleteReportinfobyasnno">
+		delete from tb_attachment
+		where att_no = (
+		select att_no
+		from tb_assign
+		where as_no = #{reportNo}
+		)
+	</delete>
+
+
+	<!-- option 값 바뀔때 li_no로 강사이름 바꿔주기위한 강사이름 재검색  -->
+	<select id="changeproname" resultType="kr.happyjob.study.stdsmt.model.StdsmtReportModel">
+		
+		select ui.name as proName
+			from tb_lecinfo as li
+			inner join tb_userinfo as ui on li.loginID = ui.loginID
+
+			where li_no = #{li_no};
+		
+	</select>
+
+
+</mapper>
+

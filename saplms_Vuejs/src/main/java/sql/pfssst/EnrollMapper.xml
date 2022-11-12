@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.pfssst.dao.PfssstEnrollDao">
+	
+	<!--    목록 조회        -->
+	<select id="listenroll" resultType="kr.happyjob.study.pfssst.model.PfssstEnrollModel">
+
+           select  ln.in_title  
+           		 , ln.in_date
+      			 , ui.name
+			     , ln.in_contents
+			     , lf.li_date
+			     , lf.li_redate
+			     , lf.li_nm
+			     , ln.att_no
+			     , lf.loginID
+      			 , ln.li_no
+      			 , ln.ln_no
+			from tb_lec_notice ln
+			     inner join tb_lecinfo lf on ln.li_no = lf.li_no
+			     inner join tb_userinfo ui ON ui.loginID = lf.loginID 
+				<where>
+					<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+						<choose>
+							<when test="searchtype eq 'title'.toString()">
+								  and ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<when test="searchtype eq 'writer'.toString()">
+								  and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<otherwise>
+								AND (
+								          	ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+								          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+								        )
+								
+							</otherwise>
+						</choose>
+					</if>
+				</where> 
+				order by ln.ln_no desc
+			     limit #{startnum},#{pagesize} <!-- 현재 보이는 페이지처리  이거 안하면 천부보임 !!!!!! -->
+			     </select>
+	 <!--  총 건수 구하기 -->
+    <select id="searchlistcnt" resultType="int">
+            select count(*)
+              from tb_lec_notice ln
+              	   left outer join tb_attachment ac on ac.att_no = ln.att_no
+                   inner join tb_lecinfo lf on ln.li_no = lf.li_no
+				   inner join tb_userinfo ui ON ui.loginID = lf.loginID
+				<where>
+					<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+						<choose>
+							<when test="searchtype eq 'title'.toString()">
+								  and ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<when test="searchtype eq 'writer'.toString()">
+								  and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<otherwise>
+								AND (
+								          	ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+								          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+								        )
+								
+							</otherwise>
+						</choose>
+					</if>
+				</where> 
+				    
+	</select>
+	<!-- 단건 조회 -->
+	   <select id="selectenroll" resultType="kr.happyjob.study.pfssst.model.PfssstEnrollModel">
+            select ln.li_no
+            	 , ln.ln_no
+                 , ln.in_date
+      			 , ui.name
+			     , ln.in_contents
+			     , lf.li_date
+			     , lf.li_redate
+			     , ln.att_no
+			     , ac.att_ori
+			     , ac.att_mul
+			     , ac.att_nli
+			     , ac.att_size
+			     , lf.loginID
+			     , lf.li_nm
+			     , ln.in_title  
+				 , lf.li_date  
+          from tb_lec_notice ln
+                  inner join tb_lecinfo lf on ln.li_no = lf.li_no
+				  inner join tb_userinfo ui ON ui.loginID = lf.loginID 
+				  left outer join tb_attachment ac on ac.att_no = ln.att_no
+         where ln.ln_no = #{ln_no}
+           and ln.li_no = #{li_no}
+    </select>
+    
+    
+    
+       <select id="selectenroll2" resultType="kr.happyjob.study.pfssst.model.PfssstEnrollModel">
+            select ln.li_no
+            	 , ln.ln_no
+                 , ln.in_date
+			     , ln.in_contents
+			     , ln.att_no
+			     , ac.att_ori
+			     , ac.att_mul
+			     , ac.att_nli
+			     , ac.att_size
+				 , ln.in_title  
+          from tb_lec_notice ln
+				  left outer join tb_attachment ac on ac.att_no = ln.att_no
+         where ln.ln_no = #{ln_no}
+    </select>
+    
+    
+    
+    
+    
+    
+     <!-- insert 등록 -->
+    <insert id="insertenroll"> 
+    	<selectKey resultType="int" keyProperty="nln_no" order="BEFORE"> <!-- bd_no를 홈페이지내에서 자동으로 번호를 추가 하기 위함  -->
+            select ifnull(max(ln_no),0) + 1 from tb_lec_notice 
+        </selectKey>
+          insert into tb_lec_notice
+                        (
+                           ln_no            
+                         , li_no   
+                         , in_title
+                         , in_contents
+                         , att_no
+                         , in_date
+                        ) values (
+                          #{nln_no} 
+                          <if test="(li_no != null) and (!li_no.equals(''))">
+                         ,#{li_no} 
+                          </if>
+                          <!-- <if test="(li_no == null) or (li_no.equals(''))">
+                         ,#{bli_no} 
+                         </if> -->
+                         ,#{title} 
+                         ,#{cont}
+                         <if test="fileyn eq 'N'.toString()">
+                         ,0
+                         </if>
+                         <if test="fileyn eq 'Y'.toString()">
+                         ,(select ifnull(max(att_no),1) from tb_attachment )
+                         </if>
+                         ,(select DATE_FORMAT(now() , '%Y-%m-%d'))
+                        )
+    </insert>
+    
+    <update id="updateenroll">
+          update tb_lec_notice
+               set  in_date  = (select DATE_FORMAT(now() , '%Y-%m-%d'))
+                  , in_title = #{title}   
+                  , in_contents = #{cont}
+                  
+                  <if test="fileyn eq 'N'.toString()">
+                  , att_no  = 0
+                  </if>
+                  <if test="fileyn eq 'Y'.toString()">
+                  , att_no  = (select ifnull(max(att_no),1) from tb_attachment )
+                  </if>
+          where ln_no = #{ln_no} 
+    </update>
+    
+    <delete id="deleteenroll">
+          delete from tb_lec_notice
+          where ln_no = #{ln_no} 
+    </delete> 
+    
+    <insert id="insertFileinfo">
+         <selectKey resultType="int" keyProperty="att_no" order="BEFORE">
+            select ifnull(max(att_no),0) + 1 from tb_attachment 
+        </selectKey> 
+          insert into tb_attachment
+                        (
+                          att_no          
+                         , att_ori   
+                         , att_date   
+                         , att_nli
+                         , att_mul  
+                         , att_size
+                        ) values (
+                           #{att_no} 
+                         ,#{file_nm} 
+                         ,(select DATE_FORMAT(now() , '%Y-%m-%d'))
+                         ,#{loc_file_loc} 
+                         ,#{file_loc} 
+                         ,#{file_size} 
+                        )
+    </insert>
+    
+    <delete id="deleteFileinfobybdno">
+          delete from tb_attachment
+           where att_no = (
+                                       select att_no 
+                                        from tb_lec_notice
+                                       where ln_no = #{ln_no}            
+                                 )
+    </delete>  
+    
+    <select id="linoone" resultType="kr.happyjob.study.pfssst.model.PfssstEnrollModel">
+    	select lf.li_no
+		      ,lf.li_nm
+		      ,lf.loginID
+		      ,ln.in_title
+		  from tb_lecinfo lf
+		       left outer join tb_lec_notice ln on lf.li_no = ln.li_no 
+		 where ln.li_no is null
+    </select>
+    
+    
+    
+   
+    
+    
+    
+    
+</mapper>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.stdsst.dao.StdsstEnrollDao">
+	
+	<!--    목록 조회        -->
+	<select id="listenroll" resultType="kr.happyjob.study.stdsst.model.StdsstEnrollModel">
+		<!--  select distinct
+	            ln.in_title  
+	           		 , ln.in_date
+	      			 , ui.name
+				     , ln.in_contents
+				     , lf.li_date
+				     , lf.li_redate
+				     , ln.att_no
+				     , lf.loginID as teacherId
+	      			 , ln.li_no
+	      			 ,sj.loginID as studentId
+				from tb_lec_notice ln
+				     inner join tb_lecinfo lf on ln.ln_no = lf.li_no
+				     inner join tb_userinfo ui ON ui.loginID = lf.loginID
+	           left outer join tb_subjectlist sj on ln.ln_no = sj.li_no -->
+           select  ln.in_title  
+           		 , ln.in_date
+      			 , ui.name
+			     , ln.in_contents
+			     , lf.li_date
+			     , lf.li_redate
+			     , ln.att_no
+			     , lf.loginID
+      			 , ln.li_no
+      			 , ln.ln_no
+      			 , lf.li_nm
+			from tb_lec_notice ln
+			     inner join tb_lecinfo lf on ln.li_no = lf.li_no
+			     inner join tb_userinfo ui ON ui.loginID = lf.loginID 
+				<where>
+					<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+						<choose>
+							<when test="searchtype eq 'title'.toString()">
+								  and ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<when test="searchtype eq 'writer'.toString()">
+								  and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<otherwise>
+								AND (
+								          	ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+								          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+								        )
+								
+							</otherwise>
+						</choose>
+					</if>
+				</where> 
+				order by ln.ln_no desc
+			     limit #{startnum},#{pagesize} <!-- 현재 보이는 페이지처리  이거 안하면 천부보임 !!!!!! -->
+			     </select>
+	 <!--  총 건수 구하기 -->
+    <select id="searchlistcnt" resultType="int">
+            select count(*)
+              from tb_lec_notice ln
+              	   left outer join tb_attachment ac on ac.att_no = ln.att_no
+                   inner join tb_lecinfo lf on ln.li_no = lf.li_no
+				   inner join tb_userinfo ui ON ui.loginID = lf.loginID
+				<where>
+					<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+						<choose>
+							<when test="searchtype eq 'title'.toString()">
+								  and ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<when test="searchtype eq 'writer'.toString()">
+								  and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+							</when>
+							<otherwise>
+								AND (
+								          	ln.in_title LIKE CONCAT('%', #{searchvalue}, '%')
+								          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+								        )
+								
+							</otherwise>
+						</choose>
+					</if>
+				</where> 
+				    
+	</select>
+	<!-- 단건 조회 -->
+	   <select id="selectenroll" resultType="kr.happyjob.study.stdsst.model.StdsstEnrollModel">
+            select ln.li_no
+            	 , ln.ln_no
+                 , ln.in_date
+      			 , ui.name
+			     , ln.in_contents
+			     , lf.li_date
+			     , lf.li_redate
+			     , ln.att_no
+			     , ac.att_ori
+			     , ac.att_mul
+			     , ac.att_nli
+			     , ac.att_size
+			     , lf.loginID
+			     , ln.in_title  
+			     , (
+					 select count(*)  
+				       from tb_subjectlist sj
+               				inner join tb_lec_notice ln on sj.li_no = ln.li_no
+				      where loginID = #{loginID}  
+				       and ln_no = #{ln_no}  
+				      group by loginID ,ln_no
+				    ) as cnt  <!-- #{loginID}현재 로그인한 id #{li_no} 로그인한 id가 신청한 강의코드번호    카운트로 select에 서브쿼리로 씀-->
+				 ,DATEDIFF(STR_TO_DATE(lf.li_date, '%Y-%m-%d'),now()) as daycnt    <!-- STR_TO_DATE(컬럼 ,'%Y-%m-%d') varchar을 datetime타입으로 변경해주는함수-->
+				 																   <!-- DATEDIFF(컬럼,now()) now()는 현재 시간  앞에는 day로 등록되어있는 컬럼에 날짜와 현재 날짜를 차감해줌  -->
+          from tb_lec_notice ln
+                  inner join tb_lecinfo lf on ln.li_no = lf.li_no
+				  inner join tb_userinfo ui ON ui.loginID = lf.loginID 
+				  left outer join tb_attachment ac on ac.att_no = ln.att_no
+         where ln.ln_no = #{ln_no}    
+    </select>
+     <!-- insert 등록 -->
+    <insert id="insertenroll"> 
+          insert into tb_subjectlist
+                        (
+                           loginID            
+                         , li_no   
+                         , sb_yn
+                        ) values (
+                          #{loginID} 
+                         ,#{li_no} 
+                         ,'N' 
+                        )
+    </insert>
+    
+    <update id="updateenroll">
+          update tb_lecinfo
+               set li_ap  =  li_ap + #{addcnt}      
+          where li_no = #{li_no} 
+    </update>
+    
+    <delete id="deleteenroll">
+          delete from tb_subjectlist
+          where li_no = #{li_no} 
+    </delete>   
+    
+</mapper>

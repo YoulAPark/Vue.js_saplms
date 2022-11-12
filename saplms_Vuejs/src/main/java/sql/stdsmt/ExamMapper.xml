@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.stdsmt.dao.StdsmtExamDao">
+
+	<select id="examLecList" resultType="kr.happyjob.study.stdsmt.model.StdsmtExamModel">
+		SELECT DISTINCT
+				ui.loginID,
+				sl.li_no,
+				li.li_nm,
+				qi.test_cd,
+				qi.test_nm,
+				CASE
+					WHEN sa.cnt IS NULL THEN 0
+					ELSE 1
+				END AS status
+		FROM tb_userinfo ui
+			INNER JOIN tb_subjectlist sl ON sl.loginID = ui.loginID
+			INNER JOIN tb_lecinfo li ON li.li_no = sl.li_no
+			INNER JOIN tb_questioninfo qi ON qi.test_cd = li.test_cd 
+			LEFT OUTER JOIN (
+			                  SELECT li_no
+			                        ,loginID
+			                        ,test_cd
+			                        ,count(*) AS cnt
+			                  FROM tb_stdanswer
+			                  GROUP BY li_no, loginID, test_cd
+			                ) sa ON sa.test_cd = li.test_cd AND sl.loginID = sa.loginID AND sa.li_no = sl.li_no
+		WHERE sl.loginID = #{loginID} 
+		<if test="(searchtype != null) and (!searchtype.equals(''))">
+			<choose>
+				<when test="searchtype eq 'undoneExam'.toString()">
+					AND li.li_no IN 
+						(
+							SELECT li_no 
+							FROM tb_subjectlist 
+							WHERE loginID = #{loginID}
+								AND li_no NOT IN 
+									(
+										SELECT li_no
+										FROM tb_stdanswer 
+										WHERE loginID = #{loginID} 
+										GROUP BY li_no
+									)
+						)
+				</when>
+				<when test="searchtype eq 'doneExam'.toString()">
+					AND li.li_no IN 
+						(
+							SELECT li_no 
+							FROM tb_subjectlist 
+							WHERE loginID = #{loginID}
+								AND li_no IN 
+									(
+										SELECT li_no
+										FROM tb_stdanswer 
+										WHERE loginID = #{loginID} 
+										GROUP BY li_no
+									)
+						)
+				</when>
+				<otherwise></otherwise>
+			</choose>
+		</if>
+		ORDER BY 1 DESC
+		LIMIT #{startnum}, #{pagesize}
+	</select>
+	
+	<select id="searchlistcnt" resultType="int">
+		SELECT COUNT(*)
+		FROM tb_userinfo ui
+			INNER JOIN tb_subjectlist sl ON sl.loginID = ui.loginID
+			INNER JOIN tb_lecinfo li ON li.li_no = sl.li_no
+			INNER JOIN tb_questioninfo qi ON qi.test_cd = li.test_cd 
+			LEFT OUTER JOIN (
+			                  SELECT li_no
+			                        ,loginID
+			                        ,test_cd
+			                        ,count(*) AS cnt
+			                  FROM tb_stdanswer
+			                  GROUP BY li_no, loginID, test_cd
+			                ) sa ON sa.test_cd = li.test_cd AND sl.loginID = sa.loginID AND sa.li_no = sl.li_no
+		WHERE sl.loginID = #{loginID} 
+		<if test="(searchtype != null) and (!searchtype.equals(''))">
+			<choose>
+				<when test="searchtype eq 'undoneExam'.toString()">
+					AND li.li_no IN 
+						(
+							SELECT li_no 
+							FROM tb_subjectlist 
+							WHERE loginID = #{loginID}
+								AND li_no NOT IN 
+									(
+										SELECT li_no
+										FROM tb_stdanswer 
+										WHERE loginID = #{loginID} 
+										GROUP BY li_no
+									)
+						)
+				</when>
+				<when test="searchtype eq 'doneExam'.toString()">
+					AND li.li_no IN 
+						(
+							SELECT li_no 
+							FROM tb_subjectlist 
+							WHERE loginID = #{loginID}
+								AND li_no IN 
+									(
+										SELECT li_no
+										FROM tb_stdanswer 
+										WHERE loginID = #{loginID} 
+										GROUP BY li_no
+									)
+						)
+				</when>
+				<otherwise></otherwise>
+			</choose>
+		</if>
+	</select>
+
+	<select id="selectoneExampaper" resultType="kr.happyjob.study.stdsmt.model.StdsmtExamModel">
+		SELECT
+				q.qst_cd,
+				q.qst_contents,
+				q.view1,
+				q.view2,
+				q.view3,
+				q.view4,
+				q.qst_answer,
+				q.score,
+				(SELECT COUNT(*) FROM tb_question WHERE test_cd = #{test_cd}) count
+		FROM tb_question q
+		WHERE q.test_cd = #{test_cd}
+	</select>
+	
+	
+	<select id="selectForGrading" resultType="String">
+		SELECT
+				qst_answer
+		FROM tb_question q
+		WHERE test_cd = #{test_cd} and qst_cd = #{qst_cd}
+	</select>
+	
+	<insert id="insertAnswerPaper">
+		INSERT INTO tb_stdanswer
+						(li_no, 
+						loginID, 
+						test_cd, 
+						qst_cd, 
+						ss_answer, 
+						ss_score)
+				VALUES (#{li_no}, 
+						#{loginID}, 
+						#{test_cd}, 
+						#{qst_cd}, 
+						#{ss_answer}, 
+						#{ss_score})
+	</insert>
+	
+	<select id="selectResultpaper" resultType="kr.happyjob.study.stdsmt.model.StdsmtExamModel">
+		SELECT
+				q.qst_cd,
+				q.qst_contents,
+				q.view1,
+				q.view2,
+				q.view3,
+				q.view4,
+				q.qst_answer,
+				q.score,
+				sa.ss_answer,
+				(SELECT COUNT(*) FROM tb_question WHERE test_cd = #{test_cd}) count
+		FROM tb_question q
+		INNER JOIN tb_stdanswer sa ON sa.test_cd = q.test_cd AND sa.qst_cd = q.qst_cd
+		INNER JOIN tb_subjectlist sl ON sl.li_no = sa.li_no AND sl.loginID = sa.loginID
+		WHERE q.test_cd = #{test_cd} AND sa.loginID = #{loginID} AND sa.li_no = #{li_no}
+	</select>
+
+	<select id="sum_score" resultType="String">
+		SELECT
+				SUM(ss_score) AS sum_score
+		FROM tb_stdanswer
+		WHERE li_no = #{li_no} AND loginID = #{loginID} AND test_cd = #{test_cd}
+	</select>
+	
+	
+</mapper>

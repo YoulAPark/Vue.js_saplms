@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.admsst.dao.AdmsstNoticeDao">
+
+  		<!--    목록 조회        -->
+  		
+    <select id="listNotice" resultType="kr.happyjob.study.admsst.model.AdmsstNoticeModel">
+           select tb.bd_no  
+           		 , tb.bd_type
+      			 , tb.bd_title
+			     , ui.name
+			     , tb.bd_contents
+			     , tb.bd_date
+			     , tb.bd_cnt
+			from tb_board tb
+			     inner join tb_userinfo ui on tb.loginID = ui.loginID         
+          <where>
+          		and tb.bd_type = 1
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when
+						test="searchtype eq 'title'.toString()">
+						and tb.bd_title LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'contents'.toString()">
+						and bd_contents LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<otherwise>
+						AND (
+						             tb.bd_title LIKE CONCAT('%', #{searchvalue}, '%')
+						          or tb.bd_contents LIKE CONCAT('%', #{searchvalue}, '%')
+						        )
+					</otherwise>
+				</choose>
+			</if>
+		</where> 
+        <choose>
+				<when test="sortflag eq '1'.toString()">
+					order by tb.bd_no desc
+				</when>
+				<when test="sortflag eq '2'.toString()">
+					order by tb.bd_date desc
+				</when>
+				<when test="sortflag eq '3'.toString()">
+					order by tb.bd_date asc
+				</when>
+		</choose>
+		limit #{startnum},#{pagesize}
+    </select>
+     <!--  총 건수 구하기 -->
+    <select id="searchlistcnt" resultType="int">
+            select count(*)
+              from tb_board tb
+                   inner join tb_userinfo ui on ui.loginID = tb.loginID         
+          <where>
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when
+						test="searchtype eq 'title'.toString()">
+						and tb.bd_title LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'contents'.toString()">
+						and bd_contents LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<otherwise>
+						AND (
+						             tb.bd_title LIKE CONCAT('%', #{searchvalue}, '%')
+						          or tb.bd_contents LIKE CONCAT('%', #{searchvalue}, '%')
+						        )
+						
+					</otherwise>
+				</choose>
+			</if>
+		  </where>
+    </select>
+
+   <select id="selectNotice" resultType="kr.happyjob.study.admsst.model.AdmsstNoticeModel">
+            select tb.bd_no
+                 , tb.bd_title
+                 , tb.loginID
+                 , ui.name
+                 , tb.bd_contents
+                 , tb.bd_date
+                 , tb.bd_type
+                 , tb.att_no
+                 , tb.bd_cnt
+          from tb_board tb
+                 inner join tb_userinfo ui on ui.loginID = tb.loginID  
+         where tb.bd_no = #{bd_no}      
+    </select>
+    
+
+    <insert id="insertNotice">
+         <selectKey resultType="int" keyProperty="nbd_no" order="BEFORE"> <!-- bd_no를 홈페이지내에서 자동으로 번호를 추가 하기 위함  -->
+            select ifnull(max(bd_no),0) + 1 from tb_board 
+        </selectKey> 
+          insert into tb_board
+                        (
+                           bd_no          
+                         , bd_title   
+                         , loginID   
+                         , bd_contents
+                         , bd_date  
+                         , bd_type 
+                         , att_no 
+                        ) values (
+                          #{nbd_no} 
+                         ,#{title} 
+                         ,#{loginID} 
+                         ,#{cont} 
+                         ,now()
+                         ,'1'
+                         , 0
+                        )
+    </insert>
+    
+    <update id="updateNotice">
+          update tb_board
+               set bd_title  =  #{title} 
+                  , loginID = #{loginID}   
+                  , bd_contents = #{cont} 
+                  , bd_date  = now()
+                  , att_no  = 0
+          where bd_no = #{bd_no} 
+    </update>
+    
+     <delete id="deleteNotice">
+          delete from tb_board
+          where bd_no = #{bd_no} 
+    </delete>   
+    
+    
+</mapper>

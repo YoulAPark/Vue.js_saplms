@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.admjmt.dao.AdmJmtResumeDao">
+
+	<!-- 과정명 목록조회 -->
+	<select id="ResumeLmList" resultType="kr.happyjob.study.admjmt.model.AdmJmtResumeVo">
+		select 	 ta.li_nm
+	        	,ta.li_date
+	        	,ta.li_redate
+	        	,ta.li_ap
+	        	,ta.li_no
+		from 	tb_lecinfo ta
+		where 1=1
+		<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+			and  ta.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+		</if>
+		limit #{pageIndex},#{pageSize}
+		
+	</select>
+	
+	<!-- 과정명 목록조회 건수 ResumeLmListCnt-->
+	<select id="ResumeLmListCnt" resultType="int">
+		select 	 count(*)
+		from 	tb_lecinfo ta
+	</select>
+	
+	<!-- 이력서 과정명 수강자 목록조회 -->
+	<select id="resumeUserList" resultType="kr.happyjob.study.admjmt.model.AdmJmtResumeVo">
+		select 	sum(ta.ss_score)  as ss_score        
+	           ,tb.name
+	           ,ta.loginID as userID
+	           ,ta.li_no
+	     from tb_stdanswer ta
+	          inner join tb_userinfo tb ON ta.loginID = tb.loginID
+	    where ta.li_no = #{li_no}
+	    group by tb.name
+	    limit #{pageIndex},#{pageSize}
+	</select>
+	
+	<!-- 이력서 과정명 수강자 목록 건수 조회 -->
+	<select id="resumeUserListCnt" resultType="int">
+	    select count(*)
+	      from (
+	            	select 	sum(ta.ss_score)          
+	                     ,tb.name
+	                     ,ta.loginID as userID
+	               from tb_stdanswer ta
+	                    inner join tb_userinfo tb ON ta.loginID = tb.loginID
+	              where ta.li_no = #{li_no}
+	              group by tb.name   
+	            ) ll
+	</select>
+	
+	<select id="selectResumeOutput" resultType="kr.happyjob.study.admjmt.model.AdmJmtResumeOutputVo">
+		<!--   쿼리문에서 ifnull로 처리 (null값안보이개) -->
+	          select ta.loginID as userID
+	          ,tb.name
+	          ,tb.hp
+	          ,tb.loc
+	          ,tb.user_dept
+	          ,tc.li_no
+	          ,tc.li_nm
+	          ,tc.li_type
+	          ,sum(td.ss_score) as sum
+	          ,te.em_nm
+	          ,te.em_date
+	          ,te.em_redate
+	          ,te.em_du
+	          ,tg.att_no
+	          ,tg.att_nli
+	          ,tg.att_mul
+	          ,tg.att_size
+	from tb_subjectlist ta
+	     inner join tb_userinfo tb on ta.loginID = tb.loginID 
+	     right outer join tb_lecinfo tc on ta.li_no = tc.li_no <!--   강의는 있지만 수강과목학생은 0~N개 -->
+	     left outer join tb_stdanswer td on tb.loginID = td.loginID
+	     left outer join tb_employment te on tb.loginID = te.loginID <!-- 학생은 있지만 취업은 0~N개 -->
+	     left outer join tb_board tf on tb.loginID = tf.loginID
+	     left outer join tb_attachment tg on tf.att_no = tg.att_no
+	     where ta.loginID = #{loginID}
+	     and tc.li_no = #{li_no}
+	</select>
+	
+
+	
+</mapper>

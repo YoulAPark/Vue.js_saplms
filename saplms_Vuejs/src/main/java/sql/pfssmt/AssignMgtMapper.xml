@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.pfssmt.dao.AssignMgtDao">
+	
+	<select id="listAssignMgt" resultType="kr.happyjob.study.pfssmt.model.AssignMgtModel">
+		SELECT ta.as_no
+			  ,tl.li_nm
+			  ,ta.att_no
+			  ,DATE_FORMAT(ta.as_date, '%Y-%m-%d' ) as as_date
+			  ,ta.loginID
+			  ,ta.as_contents
+			  ,tu.name
+		  FROM tb_assign ta
+		  		inner join tb_userinfo tu on tu.loginID = ta.loginID
+		  		inner join tb_lecinfo tl on tl.li_no = ta.li_no
+		 <where>
+		 	<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+		 		<choose>
+		 			<when
+						test="searchtype eq 'linm'.toString()">
+						and tl.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'stdnm'.toString()">
+						and tu.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+		 		</choose>
+		 	</if>
+		 </where>
+		 ORDER BY as_no DESC
+		 LIMIT #{startnum},#{pagesize}
+	</select>
+	
+	<select id="searchlistcnt" resultType="int">
+            select count(*)
+            from tb_assign ta
+                   inner join tb_userinfo tu on tu.loginID = ta.loginID
+                   inner join tb_lecinfo tl on tl.li_no = ta.li_no      
+         <where>
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when
+						test="searchtype eq 'linm'.toString()">
+						and tl.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'stdnm'.toString()">
+						and tu.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+				</choose>
+			</if>
+		</where> 
+    </select>
+    
+    <select id="selectAssignMgt" resultType="kr.happyjob.study.pfssmt.model.AssignMgtModel">
+         select ta.as_no
+         	   ,tl.li_nm
+         	   ,ta.as_contents
+               ,ta.att_no
+               ,at.att_ori
+               ,at.att_nli
+               ,at.att_mul
+               ,at.att_size
+          from tb_assign ta
+                 inner join tb_userinfo tu on tu.loginID = ta.loginID
+                 inner join tb_lecinfo tl on tl.li_no = ta.li_no
+                 left outer join tb_attachment at on at.att_no = ta.att_no
+         where ta.as_no = #{as_no}      
+    </select>
+    
+    <insert id="insertFileupload">
+         <selectKey resultType="int" keyProperty="nas_no" order="BEFORE">
+            select ifnull(max(as_no),0) + 1 from tb_assign 
+        </selectKey> 
+          insert into tb_assign ta
+                        (
+                           ta.as_no
+                         , ta.li_no         
+                         , ta.loginID   
+                         , ta.as_contents
+                         , ta.as_date  
+                         , ta.att_no  
+                        ) select #{nas_no}
+                        		,tl.li_no
+                         		,#{loginID} 
+                         		,#{contents}
+                         		,now()
+                         		<if test="fileyn eq 'N'.toString()">
+                         		,0
+                         		</if>
+                         		<if test="fileyn eq 'Y'.toString()">
+                         		,(select ifnull(max(att_no),0) from tb_attachment )
+                         		</if>
+                            from tb_assign ta
+                                 inner join tb_lecinfo tl on #{linm} = tl.li_nm
+                        
+    </insert>
+    
+    <update id="updateFileupload">
+          update tb_assign ta
+          		 inner join tb_lecinfo tl on #{linm} = tl.li_nm
+               set ta.as_date  = now()
+               	  ,ta.li_no = tl.li_no         
+                  ,ta.loginID = #{loginID}
+                  ,ta.as_contents = #{contents} 
+                  ,ta.att_no  = (select ifnull(max(att_no),0) from tb_attachment )
+          where ta.as_no = #{as_no} 
+    </update>
+    
+     <delete id="deleteFileupload">
+          delete from tb_assign
+          where as_no = #{as_no} 
+    </delete>   
+    
+    <insert id="insertFileinfo">
+         <selectKey resultType="int" keyProperty="att_no" order="BEFORE">
+            select ifnull(max(att_no),0) + 1 from tb_attachment 
+        </selectKey> 
+          insert into tb_attachment
+                        (
+                           att_no          
+                         , att_ori   
+                         , att_date   
+                         , att_nli
+                         , att_mul  
+                         , att_size
+                        ) values (
+                           #{att_no} 
+                         ,#{file_nm} 
+                         ,now()
+                         ,#{loc_file_loc} 
+                         ,#{file_loc} 
+                         ,#{file_size} 
+                        )
+    </insert>
+    
+    <delete id="deleteFileinfobybdno">
+          delete from tb_attachment
+           where att_no = (
+                                       select att_no 
+                                        from tb_assign
+                                       where as_no = #{as_no}            
+                                 )
+    </delete>
+</mapper>

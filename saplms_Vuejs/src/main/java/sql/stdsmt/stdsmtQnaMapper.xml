@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.stdsmt.dao.StdsmtQnaDao">
+	
+	<select id="qnaList" resultType="kr.happyjob.study.stdsmt.model.StdsmtQnaModel">
+		SELECT tb.bd_no
+			  ,tb.bd_title
+			  ,tb.bd_date
+			  ,tu.name
+		  FROM tb_board tb
+		   	   INNER JOIN tb_userinfo tu ON tb.loginID = tu.loginID
+		<where>
+			tb.bd_type = "2"
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when
+						test="searchtype eq 'title'.toString()">
+						and tb.bd_title LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'writer'.toString()">
+						and tu.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+				</choose>
+			</if>
+		</where> 
+		ORDER BY bd_no DESC
+		 LIMIT #{startnum},#{pagesize}  	   
+	</select>
+	
+	<select id="searchlistcnt" resultType="int">
+		SELECT count(*)
+		  FROM tb_board tb
+		   	   INNER JOIN tb_userinfo tu ON tb.loginID = tu.loginID
+		<where>
+			tb.bd_type = "2"
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when
+						test="searchtype eq 'title'.toString()">
+						and tb.bd_title LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'writer'.toString()">
+						and tu.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+				</choose>
+			</if>
+		</where>
+	</select>
+	
+	<select id="getQna" resultType="kr.happyjob.study.stdsmt.model.StdsmtQnaModel">
+         SELECT tb.bd_no
+			   ,tb.bd_title
+			   ,tb.bd_contents
+			   ,tb.bd_date
+			   ,tb.bd_type
+			   ,tu.name
+		  FROM tb_board tb
+		   	   INNER JOIN tb_userinfo tu ON tb.loginID = tu.loginID
+      where tb.bd_no = #{bd_no}      
+    </select>
+	
+	<insert id="insertQna">
+         <selectKey resultType="int" keyProperty="nbd_no" order="BEFORE">
+            SELECT ifnull(max(bd_no),0) + 1 FROM tb_board 
+        </selectKey> 
+          INSERT INTO tb_board
+                        (
+                           bd_no          
+                         , bd_title   
+                         , loginID   
+                         , bd_contents
+                         , bd_date  
+                         , bd_type 
+                        ) values (
+                           #{nbd_no} 
+                          ,#{title} 
+                          ,#{loginID} 
+                          ,#{cont} 
+                          ,now()
+                          ,'2'
+                        )
+    </insert>
+    
+    <update id="updateQna">
+          UPDATE tb_board
+             SET bd_date = now()        
+                ,loginID = #{loginID}   
+                ,bd_contents = #{qnacontents} 
+                ,bd_title = #{qnatitle} 
+           WHERE bd_no = #{qnano} 
+    </update>
+    
+    <delete id="deleteQna">
+          DELETE
+            FROM tb_board
+           WHERE bd_no = #{qnano}
+    </delete>
+    
+    <insert id="insertComment">
+    	<selectKey resultType="int" keyProperty="ncm_no" order="BEFORE">
+    		SELECT ifnull(max(cm_no),0) + 1 FROM tb_comment
+    	</selectKey>
+    	INSERT INTO tb_comment(
+    					bd_no
+    				   ,cm_no
+    				   ,cm_contents
+    				   ,cm_date
+    				   ,loginID
+    				   ) values (
+    				   	#{qnano}
+    				   ,#{ncm_no}
+    				   ,#{contents}
+    				   ,now()
+    				   ,#{loginID}
+    				   )
+    </insert>
+    
+    <select id="getComment" resultType="kr.happyjob.study.stdsmt.model.StdsmtCommentModel">
+    	SELECT tc.bd_no
+    		  ,tc.cm_no
+    		  ,tc.cm_date
+    		  ,tc.cm_contents
+    		  ,tu.name
+          FROM tb_comment tc 
+          	   INNER JOIN tb_userinfo tu ON tc.loginID = tu.loginID
+         WHERE tc.bd_no = #{bd_no}
+    </select>
+    <delete id="deleteComment">
+          DELETE
+            FROM tb_comment
+           WHERE cm_no = #{cm_no}
+    </delete>
+    
+    <select id="searchlistcnt2" resultType="int">
+    	SELECT count(*)
+          FROM tb_comment tc 
+          	   INNER JOIN tb_userinfo tu ON tc.loginID = tu.loginID
+         WHERE tc.bd_no = #{bd_no}
+	</select>
+</mapper>

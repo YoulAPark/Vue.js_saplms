@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.pfssst.dao.PfssstLecNoticeDao">
+
+    <select id="listLecNotice" resultType="kr.happyjob.study.pfssst.model.PfssstLecNoticeModel">
+            select tl.li_no
+                  ,dc.detail_name
+                  ,tl.li_nm
+                  ,ui.name
+                  ,tl.li_date
+                  ,tl.li_redate
+                  ,tl.li_ap
+                  ,tl.li_garden             
+              from tb_lecinfo tl
+                   inner join tb_userinfo ui on ui.loginID = tl.loginID
+    		       inner join tb_detail_code dc on dc.detail_code = tl.li_type and dc.group_code ='lectype'         
+         <where>
+	         <if test="(searchvalue != null) and (!searchvalue.equals(''))">
+	            <choose>
+					<when				
+						test="searchtype eq 'title'.toString()">
+						and tl.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'writer'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>					
+					<otherwise>
+						AND (
+						             tl.li_no = #{searchvalue}
+						          or tl.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+						          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+						        )
+						
+					</otherwise>
+				</choose>	            
+	         </if>
+	         <!-- 강사명이랑 날짜랑 같이 묶어서 검색해야하기때문에 따로 떨어뜨림  -->	
+		       <if test="(startdate != null) and (!startdate.equals('')) and (enddate != null) and (!enddate.equals(''))">
+		             and li_date between #{startdate} and #{enddate}
+		       </if>              
+    	 </where>
+         
+         
+		limit #{startnum},#{pagesize}
+    </select>
+    
+    <select id="searchlistcnt" resultType="int">
+            select count(*)
+            from tb_lecinfo tl
+                   inner join tb_userinfo ui on ui.loginID = tl.loginID
+    		       inner join tb_detail_code dc on dc.detail_code = tl.li_type and dc.group_code ='lectype'          
+         <where>
+	         <if test="(searchvalue != null) and (!searchvalue.equals(''))">
+	            <choose>
+					<when				
+						test="searchtype eq 'title'.toString()">
+						and tl.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'writer'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>					
+					<otherwise>
+						AND (
+						             tl.li_no = #{searchvalue}
+						          or tl.li_nm LIKE CONCAT('%', #{searchvalue}, '%')
+						          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+						        )
+						
+					</otherwise>
+				</choose>	            
+	         </if>	
+		       <if test="(startdate != null) and (!startdate.equals('')) and (enddate != null) and (!enddate.equals(''))">
+		             and li_date between #{startdate} and #{enddate}
+		       </if>            
+    	 </where>
+    </select>
+
+   <select id="selectLecNotice" resultType="kr.happyjob.study.pfssst.model.PfssstLecNoticeModel">
+            select tl.li_nm
+            	  ,tl.li_type
+            	  ,ui.name
+            	  ,ui.hp
+            	  ,ui.email
+            	  ,tl.li_no2
+            	  ,tl.li_date
+            	  ,tl.li_redate
+            	  ,tl.li_ap
+            	  ,tl.li_garden
+            	  ,tl.li_target
+            	  ,tl.li_ad
+            	  ,tl.li_plan
+            	  ,tl.li_no
+			  from tb_lecinfo tl
+			       inner join tb_userinfo ui on ui.loginID = tl.loginID
+			       <!-- inner join >> left outer join -->
+			       left outer join tb_classinfo tc on tc.li_no = tl.li_no2 
+             where tl.li_no = #{li_no}      
+    </select>
+    
+	<!-- selectKey 
+	                keyProperty : 리턴 받을 변수명
+	               ,resultType : 러턴 값의 자료형
+	               ,order : 순서 [AFTER|BEFORE] - AFTER : insert 구문 실행 후 selectKey 구문 실행
+	                                            BEFORE : selectKey 구문 실행 후 리턴 값을 keyProperty에 셋팅한 뒤 insert 구문 실행   -->
+    <insert id="insertLecNotice">
+         <selectKey resultType="int" keyProperty="nli_no" order="BEFORE">
+            select ifnull(max(li_no),0) + 1 from tb_lecinfo 
+        </selectKey> 
+          insert into tb_lecinfo
+                        (
+                           li_no
+                          ,loginID
+                          ,li_nm
+                          ,li_date
+                          ,li_redate
+                          ,li_garden
+                          ,li_ap
+                          ,li_target
+                          ,li_plan
+                          ,li_ad
+                          ,li_type
+                          ,li_no2
+                        ) values (
+                          #{nli_no}
+                         ,#{loginID}
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{titlenm} 
+                         </if> 
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{titledate} 
+                         </if> 
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{titleredate} 
+                         </if> 
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{titlegarden} 
+                         </if> 
+                         <if test="filepro eq 'N'.toString()">
+                         ,0 
+                         </if>
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{cont1} 
+                         </if> 
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{cont3} 
+                         </if> 
+                         <if test="filepro eq 'N'.toString()">
+                         ,#{cont2} 
+                         </if> 
+                         <if test="fileyn eq 'N'.toString()">
+                         ,#{plectype} 
+                         </if>
+                         <if test="fileyn eq 'N'.toString()">
+                         ,#{titlelino2} 
+                         </if>                         
+                         <if test="fileyn eq 'Y'.toString()">
+                         ,(select ifnull(max(li_ap),0) + 1 from tb_lecinfo )
+                         </if>
+                        )
+    </insert>
+    
+    <update id="updateLecNotice">
+                  update tb_lecinfo
+                     set 
+                     	 loginID = #{loginID}
+                         ,li_nm = #{titlenm} 
+                         ,li_date = #{titledate}
+                         ,li_redate = #{titleredate}
+                         ,li_garden = #{titlegarden}
+                         ,li_ap = 0
+                         ,li_target = #{cont1}
+                         ,li_plan = #{cont3}
+                         ,li_ad = #{cont2}
+                         ,li_type = #{plectype}
+                         ,li_no2 = #{titlelino2}
+                         <if test="fileyn eq 'Y'.toString()">
+                         ,li_ap = (select ifnull(max(li_ap),0) + 1 from tb_lecinfo )
+                         </if>
+          where li_no = #{li_no};
+    </update>
+    
+     <delete id="deleteLecNotice">
+          delete from tb_lecinfo
+           where li_no = #{li_no}
+    </delete> 
+      
+      
+    <select id="listroominfo" resultType="kr.happyjob.study.admpmt.model.ClassroomInfoModel">
+          select li_no
+              ,  ci_nm
+           from tb_classinfo
+    </select>     
+</mapper>

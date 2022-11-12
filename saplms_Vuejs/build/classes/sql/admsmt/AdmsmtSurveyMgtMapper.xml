@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.admsmt.dao.AdmsmtSurveyMgtDao">
+	
+	<!-- 설문결과가 있는 강의리스트 갯수 조회 -->
+	<select id="listSurveyCnt" resultType="int">
+	/*kr.happy.study.admsmt.dao.AdmsmtSurveyMgtDao.listSurveyCnt*/
+	
+      	select count(distinct sv.li_no)
+      		from tb_survey sv  
+      			left outer join tb_lecinfo li on li.li_no = sv.li_no
+      			inner join tb_userinfo ui on ui.loginID = li.loginID
+         <where>
+			<if test="(searchValue != null) and (!searchValue.equals(''))">
+				<choose>
+					<when
+						test="searchType eq 'teacherNm'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchValue}, '%')
+					</when>
+					<when
+						test="searchType eq 'lecNm'.toString()">
+						and li.li_nm LIKE CONCAT('%', #{searchValue}, '%')
+					</when>
+					<otherwise>
+						and (
+								ui.name LIKE CONCAT('%', #{searchValue}, '%')
+									or li.li_nm LIKE CONCAT('%', #{searchValue}, '%')
+						    )
+					</otherwise>
+				</choose>
+			</if>
+		</where> 
+	</select>
+
+	<!-- 설문결과가 있는 강의리스트 조회 -->
+	<select id="listSurvey" parameterType="Map" resultType="kr.happyjob.study.admsmt.model.AdmsmtSurveyMgtModel">
+	/*kr.happy.study.admsmt.dao.AdmsmtSurveyMgtDao.listSurvey*/
+	
+    	select li.li_no as lecNo
+    			,li.li_type
+    			,dc.detail_name as li_typeNm
+      			,li.li_nm as lecNm
+      			,li.li_date as lecSdate
+      			,li.li_redate as lecEdate
+      			,svtot.sv_cj as svSum
+      			,svcnt.attendcnt as svAttendCnt
+      			,ui.name as teacherNm
+      		from (select distinct li_no from tb_survey) sv    
+       			left outer join tb_lecinfo li on li.li_no = sv.li_no
+        		inner join
+          			(select li_no, count(loginID) as attendcnt 
+          				from tb_survey group by li_no) svcnt 
+            		on svcnt.li_no = sv.li_no
+        		left outer join   
+          			(select li_no, sum(sv_cj) as sv_cj from tb_survey group by li_no) svtot 
+            		on svtot.li_no = sv.li_no
+       			left outer join tb_userinfo ui on ui.loginID = li.loginID
+       			inner join tb_detail_code dc on dc.group_code = 'lectype' 
+       			
+       	 <where>
+       	 	li.li_type = dc.detail_code
+			<if test="(searchValue != null) and (!searchValue.equals(''))">
+				<choose>
+					<when
+						test="searchType eq 'teacherNm'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchValue}, '%')
+					</when>
+					<when
+						test="searchType eq 'lecNm'.toString()">
+						and li.li_nm LIKE CONCAT('%', #{searchValue}, '%')
+					</when>
+					<otherwise>
+						AND (
+								ui.name LIKE CONCAT('%', #{searchValue}, '%')
+									or li.li_nm LIKE CONCAT('%', #{searchValue}, '%')
+						    )
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		order by li.li_redate desc
+		limit #{startnum}, #{pagesize}
+	</select>	
+
+	<!-- 강의당 학생들 설문 상세 갯수 조회 -->
+	<select id="selectSurveyListCnt" parameterType="Map" resultType="int">
+	/*kr.happy.study.admsmt.dao.AdmsmtSurveyMgtDao.selectSurveyListCnt*/
+	
+		select count(*)
+      		from tb_survey sv
+      		where sv.li_no = #{li_no}
+	</select>
+
+	<!-- 강의당 학생들 설문 상세 리스트 조회 -->
+	<select id="selectSurveyList" parameterType="int" resultType="kr.happyjob.study.admsmt.model.AdmsmtSurveyMgtModel">
+	/*kr.happy.study.admsmt.dao.AdmsmtSurveyMgtDao.selectSurveyList*/
+		select ui.name as studentNm
+			  ,sv.sv_cj as eachSum
+			  ,sv.sv_js as svAnswer
+			  ,li.li_no as lecNo
+			from tb_survey sv
+	  			inner join tb_lecinfo li on li.li_no = sv.li_no
+	  			inner join tb_userinfo ui on ui.loginID = sv.loginID
+	  		where sv.li_no = #{li_no}
+	  		order by sv.sv_date desc
+	  		limit #{startnum}, #{pagesize}
+	</select>
+	
+</mapper>

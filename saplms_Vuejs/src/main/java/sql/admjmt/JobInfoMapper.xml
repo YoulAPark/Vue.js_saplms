@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.admjmt.dao.AdmjmtJobInfoDao">
+
+<!-- 취업목록 조회  -->
+ <select id="listjobInfoMgt" resultType="kr.happyjob.study.admjmt.model.AdmjmtJoblnfoModel">
+ 
+ 		select 	 em.em_no
+ 				,em.loginID
+      			,ui.name
+      			,em.em_date
+			    ,em.em_redate
+			    ,em.em_nm
+			    ,em.em_du
+  		from tb_employment em
+       			inner join tb_userinfo ui ON ui.loginID = em.loginID 
+     
+		<where>
+			<if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				<choose>
+					<when
+						test="searchtype eq 'company'.toString()">
+						and em.em_nm LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<when
+						test="searchtype eq 'student'.toString()">
+						and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+					</when>
+					<otherwise>
+						AND (
+						             
+						           em.em_nm LIKE CONCAT('%', #{searchvalue}, '%')
+						          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+						        )
+						
+					</otherwise>
+				</choose>
+			</if>
+						
+		    <if test="(datepicker1 != null) and (!datepicker1.equals(''))">
+		        and em.em_date <![CDATA[>=]]> #{datepicker1}
+		    </if>
+		    <if test="(datepicker2 != null) and (!datepicker2.equals(''))">
+		        and em.em_date <![CDATA[<=]]> #{datepicker2}
+		    </if>	
+			
+		</where> 
+		<choose>
+				<when test="sortflag eq '1'.toString()">
+					order by em.em_no desc
+				</when>
+				<when test="sortflag eq '2'.toString()">
+					order by em.em_date desc
+				</when>
+				<when test="sortflag eq '3'.toString()">
+					order by em.em_date asc
+				</when>
+		</choose>
+		limit #{startnum},#{pagesize} 
+ </select>
+ 	
+ 	 <select id="searchlistcnt" resultType="int">
+        select count(*)
+          from tb_employment em
+               inner join tb_userinfo ui on ui.loginID = em.loginID          
+
+         <where>
+	         <if test="(searchvalue != null) and (!searchvalue.equals(''))">
+					<choose>
+						<when
+							test="searchtype eq 'company'.toString()">
+							and em.em_nm LIKE CONCAT('%', #{searchvalue}, '%')
+						</when>
+						<when
+							test="searchtype eq 'student'.toString()">
+							and ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+						</when>
+						<otherwise>
+							AND (
+							             
+							           em.em_nm LIKE CONCAT('%', #{searchvalue}, '%')
+							          or ui.name LIKE CONCAT('%', #{searchvalue}, '%')
+							        )
+							
+						</otherwise>
+					</choose>
+				</if>
+			<!-- <if test="(searchvalue != null) and (!searchvalue.equals(''))">
+				and em.em_nm LIKE CONCAT('%', #{searchvalue}, '%')
+			</if> -->
+						
+		    <if test="(datepicker1 != null) and (!datepicker1.equals(''))">
+		        and em.em_date <![CDATA[>=]]> #{datepicker1}
+		    </if>
+		    <if test="(datepicker2 != null) and (!datepicker2.equals(''))">
+		        and em.em_date <![CDATA[<=]]> #{datepicker2}
+		    </if>
+		 </where> 
+    </select> 
+    
+     <select id="selectJobinfo" resultType="kr.happyjob.study.admjmt.model.AdmjmtJoblnfoModel">
+            select em.em_no
+ 				,em.loginID
+      			,ui.name
+      			,em.em_date
+			    ,em.em_redate
+			    ,em.em_nm
+			    ,em.em_du
+  		from tb_employment em
+       			inner join tb_userinfo ui ON ui.loginID = em.loginID  
+         where em.em_no = #{em_no}      
+    </select>
+    
+    <!-- 등록 -->
+    <insert id="insertjobInfo">
+         <selectKey resultType="int" keyProperty="nem_no" order="BEFORE"> <!-- bd_no를 홈페이지내에서 자동으로 번호를 추가 하기 위함  -->
+            select ifnull(max(em_no),0) + 1 from tb_employment 
+        </selectKey> 
+          insert into tb_employment
+                        (
+                           em_no          
+                         , loginID   
+                         , em_nm
+                         , em_date  
+                         , em_redate 
+                         , em_du 
+                        ) values (
+                          #{nem_no} 
+                         ,#{joninfoWriter} 
+                         ,#{comname} 
+                         ,#{joninfoNo} 
+                         ,#{joninfopd}
+                         ,#{typeyu}
+                        )
+    </insert>
+    <!-- 수정 -->
+    <update id="updatejobInfo">
+          update tb_employment
+               set em_nm  =  #{comname} 
+                  , loginID = #{joninfoWriter}   
+                  , em_date = #{joninfoNo} 
+                  , em_redate  = #{joninfopd}
+                  , em_du  = #{typeyu}
+           where em_no = #{em_no} 
+    </update>
+    <!-- 삭제 -->
+     <delete id="deletejobInfo">
+          delete from tb_employment
+          where em_no = #{em_no} 
+    </delete>   
+</mapper>

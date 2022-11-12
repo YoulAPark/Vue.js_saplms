@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.stdsmt.dao.StdsmtSurveyDao">
+	
+	<!-- 현재 수강 완료한 강의 리스트 -->
+	<select id="surveyLecList" resultType="kr.happyjob.study.stdsmt.model.StdsmtSurveyModel">
+	/*kr.happyjob.study.stdsmt.dao.StdsmtSurveyDao.surveyLecList*/
+  		
+  		select * from 
+	        (select li.li_no as lecNo
+	        		,li.li_nm as lecNm 
+			        ,ui.name as teacherNm 
+			        ,li.li_date as lecSdate 
+			        ,li.li_redate as lecEdate 
+			        ,uf.name as studentNm 
+			        ,sl.sb_yn    
+	        		,case
+			           when sv1.li_no = sl.li_no then 1
+			           else 0
+	           			end as surveyConfirm
+	        	from tb_subjectlist sl
+			        inner join tb_lecinfo li on li.li_no = sl.li_no 
+			        inner join tb_userinfo ui on ui.loginID = li.loginID 
+			        inner join tb_userinfo uf on uf.loginID = sl.loginID 
+	       			left outer join
+	       				(select sl.li_no 
+	       					from tb_survey sv, 
+	       						 tb_subjectlist sl 
+	                    	where sv.loginID = sl.loginID and sv.li_no = sl.li_no) sv1 
+	                	on sv1.li_no = sl.li_no
+	       		where sl.loginID = 'kim') surveylist 
+  			where lecEdate  <![CDATA[ <= ]]> #{lecEdate}
+  				and surveylist.sb_yn = 'N'
+  				order by surveylist.lecEdate desc
+        		limit #{startnum}, #{pagesize} 
+	</select>
+	
+	<!-- 현재 수강 완료한 강의 리스트 갯수 -->
+	<select id="surveyLecListCnt" resultType="int">
+	/*kr.happyjob.study.stdsmt.dao.StdsmtSurveyDao.surveyLecListCnt*/
+	
+		select count(*)
+  			from tb_subjectlist sl
+    			inner join tb_lecinfo li on li.li_no = sl.li_no
+    			inner join tb_userinfo ui on ui.loginID = li.loginID
+    			inner join tb_userinfo uf on uf.loginID = sl.loginID
+  			where sl.loginID = #{loginId}
+  			  	and sl.sb_yn = 'N'
+  				and li.li_redate <![CDATA[ <= ]]> #{lecEdate}
+	</select>
+	
+	<!-- 설문조사 항목(공통코드 테이블) -->
+	<select id="surveyContentList" resultType="kr.happyjob.study.stdsmt.model.StdsmtSurveyContentModel">
+		/*kr.happyjob.study.stdsmt.dao.StdsmtSurveyDao.surveyContentList*/
+		
+		select dc.detail_code as surveyNo
+      			,dc.detail_name as surveyContent
+  			from tb_group_code gc 
+    			inner join tb_detail_code dc on dc.group_code = gc.group_code 
+    		where gc.group_code = 'svItem';
+	</select>
+	
+	<!-- 설문조사 항목 갯수 -->
+	<select id="surveyContentCnt" resultType="int">
+		/*kr.happyjob.study.stdsmt.dao.StdsmtSurveyDao.surveyContentCnt*/
+		
+		select count(*)
+  			from tb_group_code gc 
+    			inner join tb_detail_code dc on dc.group_code = gc.group_code 
+    		where gc.group_code = 'svItem';
+	</select>
+	
+	<!-- 설문조사 결과 등록  -->
+	<insert id="insertSurvey">
+		/*kr.happyjob.study.stdsmt.dao.StdsmtSurveyDao.insertSurvey*/
+		
+		insert into tb_survey (
+                       li_no
+                      ,loginID
+                      ,sv_cj
+                      ,sv_js
+                      ,sv_date
+                    ) values (
+                       #{li_no}
+                      ,#{loginId}
+                      ,#{totSurveyScore}
+                      ,#{essaySurvey}
+                      ,#{surveyDate}
+                    )
+	</insert>
+	
+</mapper>
+
+

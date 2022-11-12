@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.admsmt.dao.AdmsmtExamMgtDao">
+
+	<!-- 강의 목록 조회 -->
+	<select id = "getExamList" resultType = "kr.happyjob.study.admsmt.model.AdmsmtExamMgtModel">
+		select 
+      		test_cd, 
+      		test_nm, 
+      		useyn
+ 		  from tb_questioninfo
+ 
+
+		<where>
+			
+  			<if test="(testName != null) and (!testName.equals(''))">
+  			and test_nm like CONCAT('%', #{testName}, '%')
+  			</if>
+  						
+		</where>
+		 order by test_cd 
+		 LIMIT #{pageIndex}, #{pageSize}
+	</select>
+	
+	<!-- 강의 목록 조회 -->
+	<select id = "getExamList2" resultType = "kr.happyjob.study.admsmt.model.AdmsmtExamMgtModel">
+		select 
+      		test_cd, 
+      		test_nm, 
+      		useyn
+ 		  from tb_questioninfo
+ 
+
+		<where>
+			
+  			<if test="(testName != null) and (!testName.equals(''))">
+  			and test_nm like CONCAT('%', #{testName}, '%')
+  			</if>
+  						
+		</where>
+		
+	</select>
+	
+	
+	
+	<!-- 시험지 수정 -->
+	<update id ="testUpdate" >
+			update tb_questioninfo
+			set 
+				test_nm=#{testName}     ,
+				useyn=#{useOrNot} 
+			where 
+				test_cd=#{testNo} 
+
+	</update> 
+	
+		<!-- 시험지 총 개수 구하기 -->
+		<select id="getTotalExam" resultType="int">
+		SELECT COUNT(*)
+		FROM 	tb_questioninfo
+		<where>	
+			<if test="(testName != null) and (!testName.equals(''))">
+  			and test_nm like CONCAT('%', #{testName}, '%')
+  			</if>		
+		</where>
+	</select>	
+	
+	
+	
+	<!-- 강의에 대한 문제들 출력 -->
+	<select id ="questionDetailList" resultType = "kr.happyjob.study.admsmt.model.AdmsmtExamMgtModel">
+		select 
+		  test_cd,
+          qst_cd,
+          qst_contents,
+          qst_answer,
+          view1,
+          view2,
+          view3,
+          view4,
+          score 
+      from tb_question 
+      where test_cd= #{examNo}
+  		
+  		
+     
+	</select> 
+	
+	
+
+	<!-- 문제 수정 -->	
+	<update id ="questionUpdate" >
+		update tb_question
+			set 
+				qst_contents=#{question} ,
+				qst_answer=#{answer}     ,
+				view1=#{select1} ,
+				view2=#{select2} ,
+				view3=#{select3} ,
+				view4=#{select4} ,
+				score=#{score}
+			where 
+				test_cd=#{examNo} and qst_cd=#{questionNo}
+
+	</update> 	
+	
+	
+	<!-- 문제 삭제 -->
+	<delete id ="questionDelete" >
+			delete 
+  				from tb_question	
+			where 
+				test_cd=#{examNo} and qst_cd=#{questionNo}
+
+	</delete> 	
+	
+
+	<!-- 문제 등록 -->
+	<insert id ="questionInsert" >
+			insert  
+  				into tb_question	
+			values(
+				#{examNo},
+ 				#{questionNo},
+ 				#{question},
+ 				#{answer},
+ 				#{select1},
+ 				#{select2},
+ 				#{select3},
+ 				#{select4},
+ 				#{score}
+			
+			)
+			
+
+
+	</insert> 
+	
+	<!-- 시험지 삭제 전에 문제삭제  -->
+	<delete id ="beforeTestDeleteGo">
+			delete 
+  				from tb_question	
+			where 
+				test_cd=#{examNo}; 
+	</delete> 
+	
+	
+	
+	<!-- 시험지 삭제 -->
+	<delete id ="testDeleteGo">
+			delete 
+  				from tb_questioninfo	
+			where 
+				test_cd=#{examNo}; 
+	</delete> 
+	
+		
+		
+	<!-- 시험지 등록 -->
+	<insert id ="testInsert" >
+			insert  
+  				into tb_questioninfo	
+			values(
+				#{testNo},
+ 				#{testName},
+ 				#{useOrNot}
+			)
+			
+
+
+	</insert> 
+	
+		<!-- 시험번호 가장 높은거 +1 -->
+	<select id ="testMaxNumber" resultType = "int">
+		
+		select 
+			IFNULL(max(test_cd), 0)+1 
+		from tb_questioninfo
+		
+	</select>	
+		
+		
+	
+		<!-- 문제번호 가장 높은거 +1 -->
+	<select id ="questionMaxNumber" resultType = "int">
+		
+		select 
+			IFNULL(max(qst_cd), 0)+1
+		from tb_question
+		where test_cd  = #{examNo} 
+		
+		
+	</select>	
+		
+	<!-- 	
+	공지사항 신규등록(저장) : 
+	<insert id = "insertNotice" parameterType="java.util.Map">
+	    <selectKey resultType="string" keyProperty="noticeNo" order="BEFORE">
+            SELECT IFNULL(MAX(ntc_no),0) + 1 FROM tb_notice 
+        </selectKey> 
+		INSERT
+		INTO		tb_notice
+				(
+					ntc_no, loginID, ntc_title, ntc_content, ntc_regdate
+				)
+		VALUES
+				(
+						#{noticeNo}
+					,	#{loginId}
+					,	#{noticeTitle}
+					,	#{noticeContent}
+					,	NOW()
+				)
+	</insert>
+	
+	공지사항 수정
+	<update id = "updateNotice">
+		UPDATE tb_notice
+		SET		ntc_title = #{noticeTitle}
+				,	ntc_content = #{noticeContent}
+				,	ntc_regdate = NOW()
+		WHERE	ntc_no = #{noticeNo}
+	</update>
+	
+	공지사항 삭제
+	<delete id="deleteNotice">
+		DELETE
+		FROM 	tb_notice
+		WHERE 	ntc_no = #{noticeNo}
+	</delete>
+ -->
+</mapper>
+

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.admpmt.dao.AdmpmtClassroomMgtDao">
+
+	<select id="classroomList" resultType="kr.happyjob.study.admpmt.model.AdmpmtClassroomMgtModel">
+		SELECT
+				li_no,
+				ci_nm,
+				ci_size,
+				ci_number,
+				ci_note
+		FROM tb_classinfo
+		WHERE ci_nm LIKE CONCAT('%', #{searchvalue}, '%')
+		ORDER BY 1 DESC
+		LIMIT #{startnum}, #{pagesize}
+	</select>
+	
+	<select id="searchlistcnt" resultType="int">
+		SELECT COUNT(*)
+		FROM tb_classinfo          
+		WHERE ci_nm LIKE CONCAT('%', #{searchvalue}, '%')
+	</select>
+	
+	<select id="classEquipList" resultType="kr.happyjob.study.admpmt.model.AdmpmtClassroomMgtModel">
+		SELECT
+				ci.li_no,
+				ce.ce_no,
+				ce.ce_nm,
+				ce.ce_ea,
+				ce.ce_note
+		FROM tb_classinfo ci
+			INNER JOIN tb_class_equip ce ON ce.li_no = ci.li_no
+		WHERE #{li_no} = ce.li_no
+	</select>
+	
+	
+	
+	<insert id="insertClassroom">
+		<selectKey resultType="int" keyProperty="nli_no" order="BEFORE">
+			SELECT IFNULL(MAX(li_no), 0) + 1 FROM tb_classinfo
+		</selectKey>
+			INSERT INTO tb_classinfo
+							(
+								li_no,
+								ci_nm,
+								ci_size,
+								ci_number,
+								ci_note
+							) VALUES (
+								#{nli_no},
+								#{ci_nm},
+								#{ci_size},
+								#{ci_number},
+								#{ci_note}
+							)
+	</insert>
+	
+	<update id="updateClassroom">
+		UPDATE tb_classinfo
+			SET ci_nm = #{ci_nm},
+				ci_size = #{ci_size},
+				ci_number = #{ci_number},
+				ci_note = #{ci_note}
+		WHERE li_no = #{li_no}
+	</update>
+	<select id="searchoneClassroom" resultType="kr.happyjob.study.admpmt.model.AdmpmtClassroomMgtModel">
+		SELECT *
+		FROM tb_classinfo
+		WHERE #{li_no} = li_no
+	</select>
+	
+	<delete id="deleteClassroom">
+		DELETE FROM tb_classinfo
+		WHERE li_no = #{li_no}
+	</delete>
+	
+	
+	
+	<insert id="insertEquip">
+	<selectKey resultType="int" keyProperty="nce_no" order="BEFORE">
+		SELECT IFNULL(MAX(ce_no), 0) + 1 FROM tb_class_equip
+	</selectKey>
+		INSERT INTO tb_class_equip
+						(
+							li_no,
+							ce_no,
+							ce_nm,
+							ce_ea,
+							ce_note
+						) VALUES (
+							#{li_no},
+							#{nce_no},
+							#{ce_nm},
+							#{ce_ea},
+							#{ce_note}
+						)
+	</insert>
+	
+	<update id="updateEquip">
+		UPDATE tb_class_equip
+			SET ce_nm = #{ce_nm},
+				ce_ea = #{ce_ea},
+				ce_note = #{ce_note}
+		WHERE li_no = #{li_no} AND ce_no = #{ce_no}
+	</update>
+	<select id="searchoneEquip" resultType="kr.happyjob.study.admpmt.model.AdmpmtClassroomMgtModel">
+		SELECT *
+		FROM tb_class_equip
+		WHERE #{li_no} = li_no AND ce_no = #{ce_no}
+	</select>
+	
+	<delete id="deleteEquip">
+		DELETE FROM tb_class_equip
+		WHERE li_no = #{li_no} and ce_no = #{ce_no}
+	</delete>
+</mapper>

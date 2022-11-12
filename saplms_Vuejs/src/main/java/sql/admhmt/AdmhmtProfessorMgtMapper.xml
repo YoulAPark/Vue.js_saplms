@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.admhmt.dao.AdmhmtProfessorMgtDao">
+
+	<select id="professorList" resultType="kr.happyjob.study.admhmt.model.AdmhmtProfessorMgtModel">
+		SELECT tu.name
+			  ,tu.loginID
+			  ,tu.password
+			  ,tu.hp
+			  ,dc.detail_name as icclass
+			  ,DATE_FORMAT( regdate , '%Y-%m-%d' ) as regdate
+		  FROM tb_userinfo tu
+		  	   left outer join tb_detail_code dc on tu.class = dc.detail_code and dc.group_code = "Class"
+		 WHERE tu.user_type = "D"
+		 <if test="(professorName != null) and (!professorName.equals(''))">
+		 	AND name LIKE CONCAT('%', #{professorName}, '%')
+		 </if>
+		 <if test="(startDate != null) and (!startDate.equals(''))">
+		 	AND regdate <![CDATA[ >= ]]>  #{startDate}
+		 </if>
+		 <if test="(endDate != null) and (!endDate.equals(''))">
+		 	AND regdate <![CDATA[ <= ]]> #{endDate}  
+		 </if>
+		 ORDER BY regdate DESC
+		 LIMIT #{startnum},#{pagesize}
+	</select>
+	
+	<select id="searchlistcnt" resultType="int">
+		SELECT count(*)
+		  FROM tb_userinfo
+		 WHERE user_type = "D"
+		 <if test="(professorName != null) and (!professorName.equals(''))">
+		 	AND name LIKE CONCAT('%', #{professorName}, '%')
+		 </if>
+		 <if test="(startDate != null) and (!startDate.equals(''))">
+		 	AND regdate <![CDATA[ >= ]]>  #{startDate}
+		 </if>
+		 <if test="(endDate != null) and (!endDate.equals(''))">
+		 	AND regdate <![CDATA[ <= ]]> #{endDate}  
+		 </if>
+	</select>
+	
+	<insert id="registerProfessor">
+     INSERT INTO tb_userinfo (
+     							loginID
+     						,	user_type
+     						,	name
+     						,	password
+     						,	email
+     						,	birthday
+     						,	sex
+     						,	hp
+     						,	loc
+     						,   regdate
+     						,	class
+     						) VALUES (
+     								#{loginID}
+								,	"D"
+								,	#{name}  
+								,	#{password}  
+								,	#{email}
+								,	#{birthday}    
+								,	#{sex}  
+								,	#{tel1}"-"#{tel2}"-"#{tel3}
+								,	#{address}
+								,   now()
+								,	#{cclass}
+     						)     
+     </insert>
+</mapper>
