@@ -11,7 +11,8 @@ public interface ComnCodService {
 
 	/** 그룹코드 목록 조회 */
 	public List<ComnGrpCodModel> listComnGrpCod(Map<String, Object> paramMap) throws Exception;
-	
+								// => mapper : select id="listComnGrpCod"
+								// => resultType="VO"
 	/** 그룹코드 목록 카운트 조회 */
 	public int countListComnGrpCod(Map<String, Object> paramMap) throws Exception;
 	

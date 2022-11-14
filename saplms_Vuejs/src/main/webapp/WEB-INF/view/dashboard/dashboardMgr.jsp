@@ -341,12 +341,13 @@ click-able rows
 
 		console.log("fListInfResult : " + JSON.stringify(data));
 		
-		
+		// 20221114
 		grouplist.listitem = data.listComnGrpCodModel;
 		
 		// 총 개수 추출
 		var totalCntlistInf = data.totalCntComnGrpCod;
 
+		
 		// 페이지 네비게이션 생성
 		var paginationHtml = getPaginationHtml(currentPage, totalCntlistInf, pageSizeinf, pageBlockSizeinquiry, 'fListInf');
 		console.log("paginationHtml : " + paginationHtml);
@@ -363,7 +364,18 @@ click-able rows
 			 fdetailResult(data);
 		 };
 		 
+		// 20221114
 		 callAjax("/system/detailNotice.do", "post", "json", true, param, resultCallback2);
+		 // RequestMapping, get/POST, 리턴데이터타입(json, text), sync/Async(true) 동기,비동기
+		 // sync : 값을 받을 때 까지 기다림 || Async()
+		 //	=> 응답의 유무 * Ajax	
+		 // Async : true // sync : false
+		 /*
+		 	CDN방식에서만
+		 	(타 Vue.해당 Vue의 method)
+		 	 
+		 	V-model : form-binding 폼 바인딩
+		 */
 	 }
 	
 	 /*  공지사항 상세 조회 -> 콜백함수   */
