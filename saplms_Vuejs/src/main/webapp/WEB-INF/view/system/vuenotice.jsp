@@ -237,6 +237,8 @@
 </head>
 <body>
 <form id="myForm" action=""  method="">
+
+	<!-- 2022-11-14 22:42 hidden으로 왜 숨겨놨을까? action, bd_no는 알겠는 -->
 	<input type="hidden" id="hclickpagenum" name="hclickpagenum"  value="" />
 	<input type="hidden" id="action" name="action"  value="" />
 	<input type="hidden" id="bd_no" name="bd_no"  value="" />

@@ -28,8 +28,6 @@ import kr.happyjob.study.login.service.LoginService;
 import kr.happyjob.study.login.service.MailSendService;
 import kr.happyjob.study.system.model.ComnCodUtilModel;
 
-
-
 @Controller
 
 public class LoginController {
@@ -518,7 +516,7 @@ public class LoginController {
       logger.info("확인 sklcdlistCod:"+sklcdlistCod);
       return resultMap;
    }   
-   
+
 /*	@RequestMapping("saveFileTest.do")
 	@ResponseBody
 	public Map<String, Object> saveFileTest(Model model, @RequestParam Map<String, Object> paramMap, HttpServletRequest request,
