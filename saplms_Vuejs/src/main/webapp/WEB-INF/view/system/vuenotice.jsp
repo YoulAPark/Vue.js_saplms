@@ -37,7 +37,7 @@
 	/** 버튼 이벤트 등록 */
 	function fRegisterButtonClickEvent() {
 		$('a[name=btn]').click(function(e) {
-			e.preventDefault();
+			e.preventDefault();	
 
 			var btnId = $(this).attr('id');
 			

@@ -71,7 +71,70 @@
 
 <script type="text/javascript">
 
+	var pageSize = 10;
+	var pageNumSize = 5;
 	
+	$(function() {
+		init();
+	});
+	
+	function btnEvent() {
+		$('a[name=btn]').click(function(e) {
+			e.preventDefault(); // 기본 클릭 동작을 막는 것을 할 수 있다.
+			
+			var btnId = $(this).attr('id');
+			
+			switch(btnId) {
+				/* searchBar에 있는 검색 */
+				case 'btnSearch' :	// 검색
+					listSearch();	
+					break;
+					
+				/* 글 편집 작동 */
+				// 1. 게시글 클릭 후 저장버튼
+				case 'btnSave';	
+					fileSave(); // fileSave();
+					break;
+				// 2.게시글 클릭 후 삭제버튼
+				case 'btnDelete';
+					noFilePopup.actino = "D";
+					fileSave(); // fileSave();
+					break;
+				
+				/*	신규등록 클릭 후 뜨는 모달창의 저장	*/
+				// 1. 저장
+				case 'btnSaveFile';
+					fileUpload();
+					break;
+				// 2. 삭제
+				case 'btnDeleteFile';
+					$("#action").val("D");
+					fileUpload();
+					break;
+					
+				/* 모달 닫기 */
+				// 1. 게시글 클릭시 뜨는 모달 닫기
+				case 'btnClose';
+					modalClose();
+					break;
+				// 2. 파일업로드시 모달 닫기
+				case 'btnCloseFile';
+					break;();
+			
+			}	// switch문 닫기
+		}); // a[namt='btn'] 닫기
+	} // function 닫기
+	
+	function init() {
+		boardList = new Vue({
+								el : "#boardList"
+								data : {
+											itemList : [],
+											
+								}
+			
+		})
+	}
 </script>
 
 </head>
